@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	version  = "0.9.2"
-	codename = "XrayR"
-	intro    = "A Xray backend by Quốc Tài"
+	version  = "0.0.1"
+	codename = "Xray-Server"
+	intro    = "Xray-Server is a simple and easy-to-use server application"
 )
 
 func init() {
