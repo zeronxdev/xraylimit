@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	version  = "0.0.1"
+	version  = "0.0.3"
 	codename = "Xray-Server"
 	intro    = "Xray-Server is a simple and easy-to-use server application"
 )
