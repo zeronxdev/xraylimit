@@ -111,26 +111,26 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: ^1.20
+          go-version: '^1.21'
 
       - name: Get project dependencies
         run: go mod download
 
 
-      - name: Build Xray-Server
+      - name: Build XrayR
         run: |
           mkdir -p build_assets
-          go build -v -o build_assets/Xray-Server -trimpath -ldflags "-s -w -buildid="
+          go build -v -o build_assets/XrayR -trimpath -ldflags "-s -w -buildid="
 
-      - name: Build Mips softfloat Xray-Server
+      - name: Build Mips softfloat XrayR
         if: matrix.goarch == 'mips' || matrix.goarch == 'mipsle'
         run: |
-          GOMIPS=softfloat go build -v -o build_assets/Xray-Server_softfloat -trimpath -ldflags "-s -w -buildid="
-      - name: Rename Windows Xray-Server
+          GOMIPS=softfloat go build -v -o build_assets/XrayR_softfloat -trimpath -ldflags "-s -w -buildid="
+      - name: Rename Windows XrayR
         if: matrix.goos == 'windows'
         run: |
           cd ./build_assets || exit 1
-          mv Xray-Server Xray-Server.exe
+          mv XrayR XrayR.exe
 
       - name: Prepare to release
         uses: nick-fields/retry@v2
@@ -147,26 +147,22 @@ jobs:
             cp ${GITHUB_WORKSPACE}/release/config/custom_inbound.json ./build_assets/custom_inbound.json
             cp ${GITHUB_WORKSPACE}/release/config/rulelist ./build_assets/rulelist
             cp ${GITHUB_WORKSPACE}/release/config/config.yml.example ./build_assets/config.yml
-            LIST=('geoip geoip geoip' 'domain-list-community dlc geosite')
+            LIST=('geoip' 'geosite')
             for i in "${LIST[@]}"
             do
-              INFO=($(echo $i | awk 'BEGIN{FS=" ";OFS=" "} {print $1,$2,$3}'))
-              DOWNLOAD_URL="https://raw.githubusercontent.com/v2fly/${INFO[0]}/release/${INFO[1]}.dat"
-              FILE_NAME="${INFO[2]}.dat"
+              DOWNLOAD_URL="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/${i}.dat"
+              FILE_NAME="${i}.dat"
               echo -e "Downloading ${DOWNLOAD_URL}..."
               curl -L "${DOWNLOAD_URL}" -o ./build_assets/${FILE_NAME}
-              echo -e "Verifying HASH key..."
-              HASH="$(curl -sL "${DOWNLOAD_URL}.sha256sum" | awk -F ' ' '{print $1}')"
-              [ "$(sha256sum "./build_assets/${FILE_NAME}" | awk -F ' ' '{print $1}')" == "${HASH}" ] || { echo -e "The HASH key of ${FILE_NAME} does not match cloud one."; exit 1; }
             done
       - name: Create ZIP archive
         shell: bash
         run: |
           pushd build_assets || exit 1
           touch -mt $(date +%Y01010000) *
-          zip -9vr ../Xray-Server-$ASSET_NAME.zip .
+          zip -9vr ../XrayR-$ASSET_NAME.zip .
           popd || exit 1
-          FILE=./Xray-Server-$ASSET_NAME.zip
+          FILE=./XrayR-$ASSET_NAME.zip
           DGST=$FILE.dgst
           for METHOD in {"md5","sha1","sha256","sha512"}
           do
@@ -174,18 +170,18 @@ jobs:
           done
       - name: Change the name
         run: |
-          mv build_assets Xray-Server-$ASSET_NAME
+          mv build_assets XrayR-$ASSET_NAME
       - name: Upload files to Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: Xray-Server-${{ steps.get_filename.outputs.ASSET_NAME }}
+          name: XrayR-${{ steps.get_filename.outputs.ASSET_NAME }}
           path: |
-            ./Xray-Server-${{ steps.get_filename.outputs.ASSET_NAME }}/*
+            ./XrayR-${{ steps.get_filename.outputs.ASSET_NAME }}/*
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         if: github.event_name == 'release'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./Xray-Server-${{ steps.get_filename.outputs.ASSET_NAME }}.zip*
+          file: ./XrayR-${{ steps.get_filename.outputs.ASSET_NAME }}.zip*
           tag: ${{ github.ref }}
           file_glob: true
